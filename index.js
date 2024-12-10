@@ -1,42 +1,52 @@
-const { Client, PrivateKey, AccountCreateTransaction, AccountBalanceQuery, Hbar, TransferTransaction } = require("@hashgraph/sdk");
+// Import required Hedera SDK classes
+const { Client, PrivateKey, AccountCreateTransaction, Hbar } = require("@hashgraph/sdk");
 require('dotenv').config();
 
-async function environementSetup() {
-    // Grab your Hedera testnet account ID and private key form .env file 
-    // you can create an account here  to get your keys "https://portal.hedera.com/dashboard"
+// Asynchronous function to set up the environment and create a new account
+async function environmentSetup() {
+    // Retrieve your Hedera testnet account ID and private key from .env file
     const myAccountId = process.env.MY_ACCOUNT_ID;
-    const myprivateKey = process.env.MY_PRIVATE_KEY;
-    // if there is an error we should throw this error 
-    if (!myAccountId || !myprivateKey) {
-        throw new Error("Enviroment Variables MY_ACCOUNT_ID and MY_PRIVATE_KEY must be present  ");
+    const myPrivateKey = process.env.MY_PRIVATE_KEY;
+
+    // Validate presence of environment variables
+    if (!myAccountId || !myPrivateKey) {
+        throw new Error("Environment Variables MY_ACCOUNT_ID and MY_PRIVATE_KEY must be present.");
     }
 
-    // Create Hedera Testnet clinet 
+    // Create a Hedera Testnet client
     const client = Client.forTestnet();
-    // Set your Account As the client's Operator 
-    client.setOperator(myAccountId, myprivateKey);
-    // set the default maxium transaction fe (in Hbar)
-    client.setDefaultMaxTransactionFee(new Hbar(100));
-    // set the maxium payment for queries (in Hbar)
-    client.setMaxQueryPayment(new Hbar(50));
 
-    // Create new Keys 
-    const newAccountPrivateKey = PrivateKey.generateED25519();
-    const newAccountPublicKey = newAccountPrivateKey.publicKey;
+    // Set your account as the client's operator
+    client.setOperator(myAccountId, myPrivateKey);
 
-    // Create new Account with 1,000 tinybar starting balance 
-    const newAccount = await new AccountCreateTransaction()
-        .setKey(newAccountPublicKey)
-        .setInitialBalance(Hbar.fromTinybars(1000))
-        .execute(client);
+    // Set default maximum transaction fee (in Hbars)
+    client.setDefaultMaxTransactionFee(new Hbar(100)); // 100 Hbars
 
-    //Get a new Account ID 
-    const getRecipt = await newAccount.getReceipt(client);
-    const newAccountId = getRecipt.accountId;
+    // Set maximum payment for queries (in Hbars)
+    client.setMaxQueryPayment(new Hbar(50)); // 50 Hbars
 
-    // console log the new account ID 
-    console.log("The new Acount ID is :", +newAccountId);
-    
+    try {
+        // Generate new private and public keys for a new account
+        const newAccountPrivateKey = PrivateKey.generateED25519();
+        const newAccountPublicKey = newAccountPrivateKey.publicKey;
+
+        // Create a new account with an initial balance of 1,000 tinybars
+        const newAccount = await new AccountCreateTransaction()
+            .setKey(newAccountPublicKey) // Assign the public key
+            .setInitialBalance(Hbar.fromTinybars(1000)) // Set initial balance
+            .execute(client); // Execute the transaction
+
+        // Retrieve the receipt of the transaction to get the new account ID
+        const receipt = await newAccount.getReceipt(client);
+        const newAccountId = receipt.accountId;
+
+        // Log the new account ID
+        console.log("The new Account ID is:", newAccountId);
+    } catch (error) {
+        // Catch and log any errors
+        console.error("Error during environment setup:", error);
+    }
 }
-environementSetup();
 
+// Run the environment setup function
+environmentSetup();
