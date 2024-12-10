@@ -1,5 +1,5 @@
 // Import required Hedera SDK classes
-const { Client, PrivateKey, AccountCreateTransaction, Hbar } = require("@hashgraph/sdk");
+const { Client, PrivateKey, AccountCreateTransaction, Hbar, AccountBalanceQuery } = require("@hashgraph/sdk");
 require('dotenv').config();
 
 // Asynchronous function to set up the environment and create a new account
@@ -25,7 +25,6 @@ async function environmentSetup() {
     // Set maximum payment for queries (in Hbars)
     client.setMaxQueryPayment(new Hbar(50)); // 50 Hbars
 
-    try {
         // Generate new private and public keys for a new account
         const newAccountPrivateKey = PrivateKey.generateED25519();
         const newAccountPublicKey = newAccountPrivateKey.publicKey;
@@ -41,12 +40,19 @@ async function environmentSetup() {
         const newAccountId = receipt.accountId;
 
         // Log the new account ID
-        console.log("The new Account ID is:", newAccountId);
-    } catch (error) {
-        // Catch and log any errors
-        console.error("Error during environment setup:", error);
-    }
+        console.log("The new Account ID is:", newAccountId.toString());
+
+
+    // Verify the new Account Balance
+    
+    const accountBalance = await new AccountBalanceQuery().setAccountId(newAccountId).execute(client);
+    
+    console.log("The new account balance is : " + accountBalance.hbars.toTinybars() + " Tinybars");
+    
+
+
 }
+
 
 // Run the environment setup function
 environmentSetup();
